@@ -102,7 +102,6 @@ def checkUsername():
     cur.execute(sql)
     user = cur.fetchone()
 
-    # flash(error)
     cur.close()
     conn.close()
     return jsonify({'status': 200, 'user': user})
