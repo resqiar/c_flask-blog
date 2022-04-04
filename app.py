@@ -44,6 +44,38 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """ function to show and process login page """
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = db_connection()
+        cur = conn.cursor()
+        sql = """
+            SELECT id, username
+            FROM users
+            WHERE username = '%s' AND password = '%s'
+        """ % (username, password)
+        cur.execute(sql)
+        user = cur.fetchone()
+
+        error = ''
+        if user is None:
+            error = 'Wrong credentials. No user found'
+        else:
+            session.clear()
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            return redirect(url_for('index'))
+
+        flash(error)
+        cur.close()
+        conn.close()
+
+    return render_template('register.html')
+
 @app.route('/logout')
 def logout():
     """ function to do logout """
