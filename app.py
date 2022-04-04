@@ -1,3 +1,4 @@
+from db import db_connection
 import os
 from flask import (
     Flask, request, render_template, session, flash, redirect, url_for, jsonify
@@ -7,10 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 # import database configs
-from db import db_connection
 
 app = Flask(__name__)
 app.secret_key = os.environ['SECRET_KEY']  # create the unique one for yourself
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -44,6 +45,7 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """ function to show and process login page """
@@ -76,12 +78,33 @@ def register():
 
     return render_template('register.html')
 
+
 @app.route('/logout')
 def logout():
     """ function to do logout """
     session.clear()  # clear all sessions
     return redirect(url_for('login'))
 
+
+@app.route('/check-username', methods=['POST'])
+def checkUsername():
+    data = request.get_json() or {}
+    username = data.get('username')
+
+    conn = db_connection()
+    cur = conn.cursor()
+    sql = """
+            SELECT username
+            FROM users
+            WHERE username = '%s'
+        """ % (username)
+    cur.execute(sql)
+    user = cur.fetchone()
+
+    # flash(error)
+    cur.close()
+    conn.close()
+    return jsonify({'status': 200, 'user': user})
 
 @app.route('/')
 def index():
