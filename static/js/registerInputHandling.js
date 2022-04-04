@@ -16,7 +16,8 @@ usernameInput.addEventListener("keyup", handleUsernameCheck);
 passwordInput.addEventListener("keyup", handlePasswordCheck);
 
 // default error state, will be updated accordingly.
-let isError = false;
+let usernameErrorState = false;
+let passwordErrorState = false;
 
 /**
  * Check whether the current username is valid
@@ -31,7 +32,7 @@ async function handleUsernameCheck(e) {
   if (!username || username.length < 3) {
     // Set error and return error
     setError("username", "username must be at least 3 characters", true);
-    return (isError = true);
+    return (usernameErrorState = true);
   }
 
   /**
@@ -47,11 +48,11 @@ async function handleUsernameCheck(e) {
   if (isMatch.data.user) {
     // Set error and return error
     setError("username", "username already exist", true);
-    return (isError = true);
+    return (usernameErrorState = true);
   } else {
     // Reset error
     setError("username", "", true, " ");
-    return (isError = false);
+    return (usernameErrorState = false);
   }
 }
 
@@ -71,7 +72,7 @@ function handlePasswordCheck(e) {
   if (!password || password.length < 5) {
     // set error and return error
     setError("password", "password must be at least 5 characters", true);
-    return (isError = true);
+    return (passwordErrorState = true);
   }
 
   /**
@@ -92,12 +93,12 @@ function handlePasswordCheck(e) {
       "password must contain at least 1 uppercase letter",
       true
     );
-    return (isError = true);
+    return (passwordErrorState = true);
   }
 
   // Reset error
   setError("password", "", true, " ");
-  return (isError = false);
+  return (passwordErrorState = false);
 }
 
 /**
@@ -119,4 +120,25 @@ function setError(type, error, isTriggerStyle, customStyle) {
       passwordInput.style = customStyle ? customStyle : "border: 2px solid red";
     }
   }
+}
+
+// form DOM element definitions.
+const registerForm = document.getElementById("register-form");
+
+/**
+ * Keep track of form submit events
+ * When users press register, submit event is fired and the
+ * corresponding function will be executed as well.
+ */
+registerForm.addEventListener("submit", handleRegisterSubmit);
+
+function handleRegisterSubmit(e) {
+  /**
+   * Prevent form from submitting with default behavior.
+   * With this, we can intercept or rather check the input
+   * if there is any error then we can simply cancel the event.
+   */
+  e.preventDefault();
+  if (usernameErrorState || passwordErrorState) return;
+  return registerForm.submit();
 }
