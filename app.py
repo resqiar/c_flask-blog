@@ -1,13 +1,14 @@
-from db import db_connection
 import os
+from dotenv import load_dotenv
 from flask import (
     Flask, request, render_template, session, flash, redirect, url_for, jsonify
 )
-from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
+# take environment variables from .env.
+load_dotenv()
 
 # import database configs
+from db import db_connection
 
 app = Flask(__name__)
 app.secret_key = os.environ['SECRET_KEY']  # create the unique one for yourself
