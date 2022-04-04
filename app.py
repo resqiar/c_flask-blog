@@ -54,29 +54,15 @@ def register():
         username = request.form['username']
         password = request.form['password']
 
-        conn = db_connection()
-        cur = conn.cursor()
-        sql = """
-            SELECT id, username
-            FROM users
-            WHERE username = '%s' AND password = '%s'
-        """ % (username, password)
-        cur.execute(sql)
-        user = cur.fetchone()
+    # should check if username is present and is not already exist 
 
-        error = ''
-        if user is None:
-            error = 'Wrong credentials. No user found'
-        else:
-            session.clear()
-            session['user_id'] = user[0]
-            session['username'] = user[1]
-            return redirect(url_for('index'))
+    # should check if password is present 
 
-        flash(error)
-        cur.close()
-        conn.close()
+    # should check if password is >= 5 characters long
 
+    # should check if password contain at least 1 uppercase
+
+    # render when method is GET
     return render_template('register.html')
 
 
