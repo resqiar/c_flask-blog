@@ -4,6 +4,9 @@ from flask import (
     Flask, request, render_template, session, flash, redirect, url_for, jsonify
 )
 
+# import regular expression
+import re
+
 # take environment variables from .env.
 load_dotenv()
 
@@ -51,19 +54,65 @@ def login():
 def register():
     """ function to show and process login page """
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username'].strip()
         password = request.form['password']
 
-    # should check if username is present and is not already exist 
+        # check user input validity
+        error = checkRegisterError(username, password)
 
-    # should check if password is present 
+        if error:
+            flash(error)
+        else:
+            # at this point the input is safe tobe inserted into db
+            conn = db_connection()
+            cur = conn.cursor()
+            sql = """
+                INSERT INTO users (username, password) VALUES ('%s', '%s')
+            """ % (username, password)
+            cur.execute(sql)
 
-    # should check if password is >= 5 characters long
+            # commit to make sure changes are saved
+            conn.commit()  
 
-    # should check if password contain at least 1 uppercase
+            sql = """
+                SELECT id, username
+                FROM users
+                WHERE username = '%s' AND password = '%s'
+            """ % (username, password)
+            cur.execute(sql)
+            user = cur.fetchone()
+
+            cur.close()
+            conn.close()
+
+            session.clear()
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            return redirect(url_for('index'))
 
     # render when method is GET
     return render_template('register.html')
+
+def checkRegisterError(username, password):
+    # check if username is present and not less than 3 chars
+    if username is None or len(username) < 3:
+        return "username must be at least 3 characters"
+
+    # should check if username is not already exist
+    isExist = checkUsername(username)
+    if isExist:
+        return "username already exists"
+
+    # should check if password is present and at least 5 chars
+    if password is None or len(password) < 5:
+        return "password must be at least 5 characters"
+
+    # should check if password contain at least 1 uppercase
+    isContainUppercase = re.findall("([A-Z])", password) 
+    if isContainUppercase is None or len(isContainUppercase) == 0:
+        return "password must contain at least 1 uppercase letter"
+    
+    return None
 
 
 @app.route('/logout')
@@ -74,10 +123,18 @@ def logout():
 
 
 @app.route('/check-username', methods=['POST'])
-def checkUsername():
+def checkUsernameRoute():
     data = request.get_json() or {}
     username = data.get('username')
 
+    # check if there is user with current username
+    user = checkUsername(username)
+
+    # return user
+    return jsonify({'status': 200, 'user': user})
+
+
+def checkUsername(username):
     conn = db_connection()
     cur = conn.cursor()
     sql = """
@@ -87,10 +144,10 @@ def checkUsername():
         """ % (username)
     cur.execute(sql)
     user = cur.fetchone()
-
     cur.close()
     conn.close()
-    return jsonify({'status': 200, 'user': user})
+    return user
+
 
 @app.route('/')
 def index():
