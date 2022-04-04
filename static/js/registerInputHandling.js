@@ -7,28 +7,31 @@ const passwordInput = document.getElementById("register-password-input");
 const passwordError = document.getElementById("register-password-error");
 
 /**
- * Keep track of user key-down events
+ * Keep track of user key-up events
  * on the defined input. When users press any key
  * or input a character, the event is fired and the
  * corresponding function will be executed as well.
  */
-usernameInput.addEventListener("keydown", handleUsernameCheck);
-passwordInput.addEventListener("keydown", handlePasswordCheck);
+usernameInput.addEventListener("keyup", handleUsernameCheck);
+passwordInput.addEventListener("keyup", handlePasswordCheck);
+
+// default error state, will be updated accordingly.
+let isError = false;
 
 /**
  * Check whether the current username is valid
  * or is available in the database. Username must be
  * unique and the server must not accept existed username.
  * @param {KeyboardInputEvent} e
- * @returns Promise boolean
  */
 async function handleUsernameCheck(e) {
   const username = e.target.value;
 
   // If username is not specified or less than 3 characters
   if (!username || username.length < 3) {
-    setUsernameError("username must be at least 3 characters", true);
-    return false;
+    // Set error and return error
+    setError("username", "username must be at least 3 characters", true);
+    return (isError = true);
   }
 
   /**
@@ -42,29 +45,78 @@ async function handleUsernameCheck(e) {
 
   // If the username exist (not available)
   if (isMatch.data.user) {
-    // Set error and return false
-    setUsernameError("username already exist", true);
-    return false;
+    // Set error and return error
+    setError("username", "username already exist", true);
+    return (isError = true);
   } else {
-    // Reset error and return true
-    setUsernameError("", true, " ");
-    return true;
+    // Reset error
+    setError("username", "", true, " ");
+    return (isError = false);
   }
 }
 
 /**
+ * Check whether the password is valid or not.
+ * Valid password must be at least 5 characters long
+ * and at least 1 letter is uppercase.
+ * @param {KeyboardInputEvent} e
+ */
+function handlePasswordCheck(e) {
+  const password = e.target.value;
+
+  /**
+   * Check if password is present
+   * and the length is not less than 5 characters long.
+   */
+  if (!password || password.length < 5) {
+    // set error and return error
+    setError("password", "password must be at least 5 characters", true);
+    return (isError = true);
+  }
+
+  /**
+   * Match all uppercase letter inside password
+   * using Regular Expression. This will return
+   * array of letter which format is uppercase.
+   */
+  const isContainUppercase = password.match(/[A-Z]/g);
+
+  /**
+   * If uppercase array is null or the length is
+   * zero, return error.
+   */
+  if (!isContainUppercase || isContainUppercase.length === 0) {
+    // Set error and return error
+    setError(
+      "password",
+      "password must contain at least 1 uppercase letter",
+      true
+    );
+    return (isError = true);
+  }
+
+  // Reset error
+  setError("password", "", true, " ");
+  return (isError = false);
+}
+
+/**
  * Simple function to modify DOM element.
+ * @param {"username" | "password"} type
  * @param {String} error
  * @param {Boolean} isTriggerStyle
  * @param {String} customStyle
  */
-function setUsernameError(error, isTriggerStyle, customStyle) {
-  usernameError.innerHTML = error;
-  if (isTriggerStyle) {
-    usernameInput.style = customStyle ? customStyle : "border: 2px solid red";
+function setError(type, error, isTriggerStyle, customStyle) {
+  if (type === "username") {
+    usernameError.innerHTML = error;
+    if (isTriggerStyle) {
+      usernameInput.style = customStyle ? customStyle : "border: 2px solid red";
+    }
+  } else if (type === "password") {
+    passwordError.innerHTML = error;
+    if (isTriggerStyle) {
+      passwordInput.style = customStyle ? customStyle : "border: 2px solid red";
+    }
   }
-}
-
-function handlePasswordCheck(e) {
-  console.log(e.target.value);
 }
